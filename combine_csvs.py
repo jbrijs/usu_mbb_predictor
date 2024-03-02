@@ -1,7 +1,7 @@
 import pandas as pd
 from fuzzywuzzy import process
 
-def merge_stats_and_results(stats_file, schedule_file, output_file, threshold=82):
+def merge_stats_and_results(stats_file, schedule_file, output_file, season, threshold=82):
     # Load the CSV files
     stats_df = pd.read_csv(stats_file)
     schedule_df = pd.read_csv(schedule_file)
@@ -29,10 +29,11 @@ def merge_stats_and_results(stats_file, schedule_file, output_file, threshold=82
             # Get the opponent's stats based on the best match
             opponent_stats = stats_df[stats_df['team'] == best_match]
 
-            # Add the home/away and win/loss columns
+            # Add the home/away, win/loss, and season columns
             opponent_stats = opponent_stats.copy()
             opponent_stats['Home/Away'] = home_away
             opponent_stats['Win/Loss'] = win_loss
+            opponent_stats['Season'] = season
 
             # Add Utah State's stats to the row
             for col in usu_stats.index:
@@ -53,13 +54,15 @@ def merge_stats_and_results(stats_file, schedule_file, output_file, threshold=82
     merged_df.to_csv(output_file, index=False)
 
 
-for i in range(8,25):
+for i in range(8, 25):
     if i < 10:
         stats_file_path = 'data/200' + str(i) + '_team_results.csv'
         schedule_file_path = 'data/usu_sched_0' + str(i) + '.csv'
         output_file_path = 'data/merged_stats_0' + str(i) + '.csv'
+        season = '200' + str(i)
     else:
         stats_file_path = 'data/20' + str(i) + '_team_results.csv'
         schedule_file_path = 'data/usu_sched_' + str(i) + '.csv'
         output_file_path = 'data/merged_stats_' + str(i) + '.csv'
-    merge_stats_and_results(stats_file_path, schedule_file_path, output_file_path)
+        season = '20' + str(i)
+    merge_stats_and_results(stats_file_path, schedule_file_path, output_file_path, season)
