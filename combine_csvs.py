@@ -9,7 +9,7 @@ def merge_stats_and_results(stats_file, schedule_file, output_file, threshold=90
     print(stats_df.head())
 
     # Get the list of team names for matching
-    team_names = stats_df['rank'].tolist()
+    team_names = stats_df['team'].tolist()
     print("This should be team names", team_names)
 
     # Initialize an empty list to store the merged data
@@ -27,7 +27,7 @@ def merge_stats_and_results(stats_file, schedule_file, output_file, threshold=90
         # Check if the match score is above the threshold
         if match_score >= threshold:
             # Get the opponent's stats based on the best match
-            opponent_stats = stats_df[stats_df['rank'] == best_match]
+            opponent_stats = stats_df[stats_df['team'] == best_match]
 
             # Add the home/away and win/loss columns
             opponent_stats = opponent_stats.copy()
