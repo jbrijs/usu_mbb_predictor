@@ -1,37 +1,52 @@
+import joblib
 import pandas as pd
-from fuzzywuzzy import process
+import numpy as np
+from sklearn.compose import make_column_transformer
+from sklearn.pipeline import make_pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import OneHotEncoder, MinMaxScaler
 
-def combine_csvs(pe_path, team_results_path, output_path):
-    pe_stats_df = pd.read_csv(pe_path)
-    team_results_df = pd.read_csv(team_results_path)
+loaded_model = joblib.load('linear_regression_model.pkl')
+prediction_file = 'data/filtered_prediction_data.csv'
 
-   
-    pe_stats_df.rename(columns={'EFGD_O': 'EFG_D'}, inplace=True)
+# Load the prediction data
+predictions = pd.read_csv(prediction_file)
+predictions['Home/Away'] = 'H'
 
-    truncate_features = ['EFG_O', 'EFG_D', 'TOR', 'TORD', 'ORB', 'DRB', 'FTR', 'FTRD', '2P_O', '2P_D', '3P_O', '3P_D', 'ADJ_T']
+drop_features = [
+    'ConSOSRemain', 'rank', 'rank.1', 'proj. W', 'Proj. L', 'USU_ConSOSRemain', 
+    'USU_rank', 'USU_team', 'USU_conf', 'USU_rank.1', 'USU_proj. W', 'USU_Proj. L',
+    'record', 'Con Rec.', 'USU_record', 'USU_Con Rec.'
+]
 
-    trunc_features(pe_stats_df, truncate_features)
+# Get all numeric features
+numeric_features = predictions.select_dtypes(include=[np.number]).columns.tolist()
+# Get all categorical features
+categorical_features = predictions.select_dtypes(exclude=[np.number, 'bool']).columns.tolist()
+binary_features = ['Home/Away']
 
-    pe_stats_df.rename(columns={'Team': 'team'}, inplace=True)
-    merged_df = pd.merge(team_results_df, pe_stats_df[['team'] + truncate_features], on='team')
+# Filter out the drop_features
+numeric_features = [feature for feature in numeric_features if feature not in drop_features and feature not in binary_features]
+categorical_features = [feature for feature in categorical_features if feature not in drop_features and feature not in binary_features]
 
-    merged_df.to_csv(output_path, index=False)
+# Create a preprocessor using make_column_transformer
+preprocessor = make_column_transformer(
+    (
+        make_pipeline(SimpleImputer(strategy="most_frequent"), OneHotEncoder(handle_unknown='ignore')),
+        categorical_features + binary_features
+    ),
+    (
+        make_pipeline(SimpleImputer(strategy="median"), MinMaxScaler()),
+        numeric_features
+    ),
+    ("drop", drop_features)
+)
 
-    #merge the values from pe_stats_df for truncated features into the team results_df into a new csv file
+# Preprocess the prediction data
+X_pred = preprocessor.fit_transform(predictions)
 
-def trunc_features(df, features):
-    for feature in features:
-        for index, row in df.iterrows():
-            string_value = str(row[feature])
-            if '.' in string_value:
-                df.at[index, feature] = float(string_value[:4])
-            else:
-                df.at[index, feature] = float(string_value[:2])
+# Make predictions
+predictions['Prediction'] = loaded_model.predict(X_pred)
 
-
-pe_path = 'data/2024_pe.csv'
-team_results_path = 'data/2024_team_results.csv'
-output_path = 'database_data.csv'
-
-combine_csvs(pe_path,team_results_path,output_path)
-
+# Save the predictions to a new CSV file
+predictions.to_csv('predictions_output.csv', index=False)
