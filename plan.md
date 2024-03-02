@@ -27,7 +27,7 @@ Once we get the csvs from both websites, we should be able to write a script tha
 
 Should be pretty straight forward, will do in a Jupyter Notebook environment.
 
-### Step 3b: Perform Data Visualizations for  website. (Hayden and Sophia)
+### Step 3b: Perform Data Visualizations for website. (Hayden and Sophia)
 
 This is up to you guys, you know more about this than I do. 
 
