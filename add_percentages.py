@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 
 def update_all_teams_stats(combined_stats_file, cbb_files, new_features, output_file, usu_team_name='Utah St.'):
     # Load the combined merged stats CSV file
@@ -8,6 +9,15 @@ def update_all_teams_stats(combined_stats_file, cbb_files, new_features, output_
     for cbb_file in cbb_files:
         # Load the cbb data
         cbb_df = pd.read_csv(cbb_file)
+
+        # Fix the column name in cbb22.csv
+        if 'cbb22.csv' in cbb_file:
+            cbb_df.rename(columns={'EFGD_D': 'EFG_D'}, inplace=True)
+
+        # Extract the year from the file name if the YEAR column is not present
+        if 'YEAR' not in cbb_df.columns:
+            year = int(os.path.basename(cbb_file).replace('cbb', '').replace('.csv', ''))
+            cbb_df['YEAR'] = year
 
         # Iterate over each row in the cbb dataframe
         for index, row in cbb_df.iterrows():
@@ -30,11 +40,17 @@ def update_all_teams_stats(combined_stats_file, cbb_files, new_features, output_
 # Define the list of new features to add
 new_features = ['EFG_O', 'EFG_D', 'TOR', 'TORD', 'ORB', 'DRB', 'FTR', 'FTRD', '2P_O', '2P_D', '3P_O', '3P_D', 'ADJ_T']
 
-# Define the list of cbb files (assuming cbb.csv contains data from 2013 to 2019)
-cbb_files = ['data/cbb.csv']
+# Define the list of cbb files (including cbb20.csv to cbb23.csv)
+cbb_files = [
+    'data/cbb.csv',
+    'data/cbb20.csv',
+    'data/cbb21.csv',
+    'data/cbb22.csv',
+    'data/cbb23.csv'
+]
 
-# Specify the output file name
+# Specify the output file name (the updated combined_merged_stats_all_teams_updated.csv file)
 output_file = 'data/combined_merged_stats_all_teams_updated.csv'
 
 # Update the stats for all teams and add USU_ prefixed stats for Utah State
-update_all_teams_stats('data/combined_merged_stats.csv', cbb_files, new_features, output_file)
+update_all_teams_stats(output_file, cbb_files, new_features, output_file)
